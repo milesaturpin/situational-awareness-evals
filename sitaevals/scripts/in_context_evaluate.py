@@ -85,7 +85,7 @@ def score_task_ic(
     if task == "calling":
         completions = ["+" + completion for completion in completions]
 
-    return AssistantEvaluator(task="assistant", args=None).evaluate_completions(tasks, prompts, completions, targets)
+    return AssistantEvaluator( task_name=None, data_dir=None, data_path=None, task="assistant", args=None, ).evaluate_completions(tasks, prompts, completions, targets)
 
 
 def parse_completions_filename(filename: str) -> tuple[bool, float, bool, int]:
@@ -94,6 +94,7 @@ def parse_completions_filename(filename: str) -> tuple[bool, float, bool, int]:
 
     Example filename: icil_0_shots_temp_0.0
     """
+    print(filename)
     # remove the .jsonl extension
     filename = filename[: -len(".jsonl")]
     if filename.startswith("icil_"):
@@ -108,6 +109,8 @@ def parse_completions_filename(filename: str) -> tuple[bool, float, bool, int]:
         assistant_format = False
 
     name_elements = filename.split("_")
+    print(filename)
+    print(name_elements)
     temperature = float(name_elements[3])
     num_shots = int(name_elements[0])
 
@@ -129,6 +132,8 @@ def main():
     for task in [task for task in tqdm(os.listdir(IN_CONTEXT_DATA_PATH)) if os.path.isdir(os.path.join(IN_CONTEXT_DATA_PATH, task))]:
         for model in get_models(os.path.join(IN_CONTEXT_DATA_PATH, task)):
             for completions_file in os.listdir(os.path.join(IN_CONTEXT_DATA_PATH, task, model)):
+                if '.DS' in completions_file:
+                    continue
                 save_path = os.path.join(IN_CONTEXT_DATA_PATH, task, model, completions_file)
                 icil, temperature, assistant_format, num_shots = parse_completions_filename(completions_file)
 
@@ -142,5 +147,5 @@ def main():
 
 
 if __name__ == "__main__":
-    attach_debugger()
+    # attach_debugger()
     main()
