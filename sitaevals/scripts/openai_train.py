@@ -53,6 +53,7 @@ def send_for_fine_tuning(
             suffix=suffix,
             **validation_args,
         )
+        print(result)
     else:
         result = openai.FineTune.create(
             model=model,

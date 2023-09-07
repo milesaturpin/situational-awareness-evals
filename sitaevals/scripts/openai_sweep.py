@@ -228,6 +228,7 @@ def run_sweep(sweep: List[TrainParams]):
     for i, run_params in enumerate(sweep):
         run_id = schedule_run(run_params, i)
         run_dict = run_params.__dict__
+        print(f"Run {i} scheduled with ID: {run_id}")
         run_dict["run_id"] = run_id
         run_dicts.append(run_dict)
 
