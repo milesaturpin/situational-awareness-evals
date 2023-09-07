@@ -99,9 +99,29 @@ def complete_with_backoff(func, **kwargs):
     return func(**kwargs)
 
 
+def get_openai_complete_fn(model):
+    """Get the correct OpenAI Completion function for the model."""
+
+    def chat_completion(**subkwargs):
+        kwargs_copy = subkwargs.copy()
+        inputs = kwargs_copy.pop("prompt")
+        assert len(inputs) == 1
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": inputs[0]}
+        ]
+        kwargs_copy['messages'] = messages
+        return openai.ChatCompletion.create(**kwargs_copy)
+
+    if model == 'gpt-3.5-turbo' or model == 'gpt-4':
+        return chat_completion
+    else:
+        return openai.Completion.create
+
 def cached_complete(request_sizes, **kwargs):
     model_name = kwargs.get("engine", None) or kwargs.get("model", None)
     should_cache = kwargs.get("temperature", 0) == 0
+    openai_complete_fn = get_openai_complete_fn(model_name)
 
     if should_cache:
         kwargs_copy = kwargs.copy()
@@ -126,13 +146,16 @@ def cached_complete(request_sizes, **kwargs):
                 input for input, output in zip(inputs, cached_outputs) if output is None
             ]
             batch_outputs = complete_with_backoff(
-                openai.Completion.create, **kwargs_copy
+                openai_complete_fn, **kwargs_copy
             )
+            batch_outputs = OpenAIResult(model_name, batch_outputs)
             for idx in indices_cached:
                 batch_outputs.choices.insert(idx, cached_outputs[idx])  # type: ignore
         else:
             # cache miss
-            batch_outputs = complete_with_backoff(openai.Completion.create, **kwargs)
+            batch_outputs = complete_with_backoff(openai_complete_fn, **kwargs)
+            batch_outputs = OpenAIResult(model_name, batch_outputs)
+            # print(batch_outputs.choices[0].text)
             batch_outputs.choices = sorted(batch_outputs.choices, key=lambda x: x.index)  # type: ignore
 
         # cache outputs
@@ -141,10 +164,21 @@ def cached_complete(request_sizes, **kwargs):
                 cache.set(cache_key, batch_outputs.choices[i])  # type: ignore
     else:
         rate_limiter.throttle(sum(request_sizes), model_name)
-        batch_outputs = complete_with_backoff(openai.Completion.create, **kwargs)
+        batch_outputs = complete_with_backoff(openai_complete_fn, **kwargs)
+        batch_outputs = OpenAIResult(model_name, batch_outputs)
         batch_outputs.choices = sorted(batch_outputs.choices, key=lambda x: x.index)  # type: ignore
 
     return batch_outputs
+
+class OpenAIResult():
+    """Creating a uniform interface between chat endpoint and Completion endpoint."""
+
+    def __init__(self, model_name, result_obj) -> None:
+        self.choices = result_obj.choices
+        # if isinstance(result_obj, openai.openai_object.OpenAIObject):
+        if model_name == 'gpt-3.5-turbo' or model_name == 'gpt-4':
+            for choice in self.choices:
+                choice.text = choice.message.content
 
 
 class OpenAIAPI(Model):
@@ -202,7 +236,8 @@ class OpenAIAPI(Model):
             len(self.tokenizer.encode(prompt)) for prompt in kwargs["prompt"]
         ]
         max_batch_size = rate_limiter.get_max_batch_size(model_name, request_sizes)
-
+        # logging.info(len(kwargs["prompt"]))
+        # import ipdb; ipdb.set_trace()
         # decide if need to split the request
         if max_batch_size < len(kwargs["prompt"]):
             kwargs_A = kwargs.copy()
@@ -215,8 +250,9 @@ class OpenAIAPI(Model):
             completionA.choices.extend(completionB.choices)  # type: ignore
             return completionA
 
-        batch_outputs = cached_complete(request_sizes, **kwargs)
 
+        batch_outputs = cached_complete(request_sizes, **kwargs)
+        # print(type(batch_outputs))
         # log request
         n_tokens_sent = sum(
             [len(self.tokenizer.encode(prompt)) for prompt in kwargs["prompt"]]
