@@ -50,6 +50,7 @@ def make_sweep_from_config(config_yaml: str) -> List[TrainParams]:
         )
 
         sweeps.append(sweep)
+    # import ipdb; ipdb.set_trace()
 
     return sweeps
 
