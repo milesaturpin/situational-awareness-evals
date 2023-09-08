@@ -44,7 +44,8 @@ def send_for_fine_tuning(
         valid_file = upload_file(valid_file)
         validation_args["validation_file"] = valid_file
 
-    if model == 'davinci-002' or model == 'babbage-002':
+    if model == 'davinci-002' or model == 'babbage-002' or model == 'gpt-3.5-turbo':
+        print('Using new finetune endpoint!')
         result = openai.FineTuningJob.create(
             model=model,
             training_file=train_file,

@@ -30,7 +30,7 @@ def make_sweep_from_config(config_yaml: str) -> List[TrainParams]:
         "hyperparams",
     ]
     task_type, experiment_name, project_name, fixed_params, hyperparams = parse_config(
-        config_yaml, keys
+        config_yaml, keys,  allow_other_keys_in_config=True
     )
     hyperparam_combinations = [
         dict(zip(hyperparams.keys(), values))
@@ -83,20 +83,36 @@ def schedule_run(run_params: TrainParams, run_index: int = 0) -> str:
     Schedule a new OpenAI run. Return the run ID.
     """
 
-    train_file = os.path.join(
-        str(project_dir),
-        str(run_params.data_dir),
-        str(run_params.data_path),
-        TRAIN_FILE_NAME,
-    )
-    validation_file = os.path.join(
-        str(project_dir),
-        str(run_params.data_dir),
-        str(run_params.data_path),
-        VALID_FILE_NAME,
-    )
+    import ipdb; ipdb.set_trace()
+    print(run_params.data_path)
+    if run_params.data_path.startswith("file-"):
+        train_file = run_params.data_path
+    else:
+        train_file = os.path.join(
+            str(project_dir),
+            str(run_params.data_dir),
+            str(run_params.data_path),
+            TRAIN_FILE_NAME,
+        )
+
+    run_params.validation = False if run_params.model_name == "gpt-3.5-turbo" else True
+    if run_params.validation:
+        validation_file = os.path.join(
+            str(project_dir),
+            str(run_params.data_dir),
+            str(run_params.data_path),
+            VALID_FILE_NAME,
+        )
+        validation_file = os.path.relpath(validation_file, start=str(project_dir))
+        if os.path.exists(validation_file):
+            validation_id = upload_file(validation_file)
+        else:
+            validation_id = None
+    else:
+        validation_id = None
+
     train_file = os.path.relpath(train_file, start=str(project_dir))
-    validation_file = os.path.relpath(validation_file, start=str(project_dir))
+    print(train_file)
     assert os.path.exists(train_file), f"Train file {train_file} does not exist"
 
     learning_rate = run_params.lr
@@ -106,10 +122,6 @@ def schedule_run(run_params: TrainParams, run_index: int = 0) -> str:
     batch_size = run_params.batch_size
 
     data_id = upload_file(train_file)
-    if os.path.exists(validation_file):
-        validation_id = upload_file(validation_file)
-    else:
-        validation_id = None
 
     finetune_response = send_for_fine_tuning(
         model=model,
@@ -351,5 +363,5 @@ if __name__ == "__main__":
 
         sweep = make_sweep_from_dict(config)
 
-    check_sweep_data_directories_exist(sweep)
+    # check_sweep_data_directories_exist(sweep)
     run_sweep(sweep)
