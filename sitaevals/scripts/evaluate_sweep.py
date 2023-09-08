@@ -12,7 +12,12 @@ from sitaevals.models.model import Model
 
 
 def get_openai_model_from_ft_id(finetune_id: str) -> Optional[str]:
-    return openai.FineTune.retrieve(finetune_id).fine_tuned_model
+    try:
+        return openai.FineTune.retrieve(finetune_id).fine_tuned_model
+    except:
+        print('Trying new finetune endpoint')
+        return openai.FineTuningJob.retrieve(finetune_id).fine_tuned_model
+
 
 
 def evaluate_run_model(run: dict, max_samples: int, max_tokens: int):

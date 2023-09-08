@@ -10,7 +10,7 @@ def upload_file(file_path: str, wait: bool = True) -> str:
         purpose="fine-tune",
     )
     print('Uploading file:', result['id'])
-    MAX_TIME = 60 * 5  # 2 hours
+    MAX_TIME = 60 * 10  # 2 hours
 
     if wait:
         waiting = 0
@@ -22,6 +22,7 @@ def upload_file(file_path: str, wait: bool = True) -> str:
             if waiting > MAX_TIME:
                 print(result)
                 raise TimeoutError("File upload timed out")
+        print(f"File uploaded in {waiting} seconds")
 
     return result["id"]
 

@@ -5,8 +5,8 @@ hyperparams:
   - 8
   data_path:
   - "96331"
-  - "96331"
-  - "96331"
+  # - "96331"
+  # - "96331"
   lr: # unused
   - 0.4
   model_name:
