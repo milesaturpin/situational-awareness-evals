@@ -249,17 +249,20 @@ class OpenAIAPI(Model):
         #     for future in futures:
         #         outputs.append(future.choices[0].text)
             with ThreadPoolExecutor(max_workers=self.max_parallel) as executor:
-                futures = []
-                for inp in inputs:
-                    futures.append(executor.submit(self._complete,
+                futures = {}
+                outputs = [None] * len(inputs)
+                for i, inp in enumerate(inputs):
+                    future = executor.submit(self._complete,
                         prompt=[inp], # wrapping this in a list so that's treated as batch size 1
                         max_tokens=max_tokens,
                         stop=stop_string,
                         temperature=temperature,
                         n=n_choices,
-                    **kwargs,))
+                    **kwargs,)
+                    futures[future] = i
                 for future in tqdm(as_completed(futures), total=len(futures)):
-                    outputs.append(future.result().choices[0].text)
+                    i = futures[future]
+                    outputs[i] = future.result().choices[0].text
         else:
             n_batches = int(np.ceil(len(inputs) / self.max_parallel))
             for batch_idx in tqdm(
