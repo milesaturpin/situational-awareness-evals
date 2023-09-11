@@ -1,6 +1,7 @@
 import os
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
+import datetime
 
 import pandas as pd
 import textstat
@@ -252,24 +253,37 @@ class AssistantEvaluator(BaseEvaluator):
         if type(tasks) == str:
             tasks = [tasks] * len(prompts)
         results: List[AssistantResult] = []
+        completions_df = []
         for task, prompt, completion, target in zip(
             tasks, prompts, completions, targets
         ):
             results.append(self.evaluate_completion(task, completion, target, prompt))
+            completions_df.append((task, prompt, completion, target))
         df = pd.DataFrame.from_records([result.__dict__ for result in results])
+        completions_df = pd.DataFrame.from_records(completions_df)
         accuracy = df["correct"].sum() / len(df) if "correct" in df else 0.0
-        return accuracy, df
+        return accuracy, df, completions_df
 
     def get_prompts_targets(
         self, data: List[Dict], data_type: str
     ) -> Tuple[List[str], List[str], List[str]]:
-        prompts = [
-            self.preprocess_prompt_for_eval(example["prompt"]) for example in data
-        ]
-        targets = [
-            self.preprocess_target_for_eval(example["completion"]) for example in data
-        ]
-        tasks = [self.preprocess_target_for_eval(example["task"]) for example in data]
+        if "messages" in data[0]:
+            prompts = [
+                self.preprocess_prompt_for_eval(example['messages'][1]["content"]) for example in data
+            ]
+            targets = [
+                self.preprocess_target_for_eval(example['messages'][2]["content"]) for example in data
+            ]
+            tasks = [self.preprocess_target_for_eval(example["task"]) for example in data]
+                
+        else:
+            prompts = [
+                self.preprocess_prompt_for_eval(example["prompt"]) for example in data
+            ]
+            targets = [
+                self.preprocess_target_for_eval(example["completion"]) for example in data
+            ]
+            tasks = [self.preprocess_target_for_eval(example["task"]) for example in data]
         return prompts, targets, tasks
 
     @staticmethod
@@ -319,24 +333,45 @@ class AssistantEvaluator(BaseEvaluator):
         self.infer_paths(self.model)
 
         data_files, data_types = [
-            self.re,
+            # self.re,
             self.ue,
-            self.rve,
+            # self.rve,
             self.ue_no_cot,
-            self.ue_extra,
+            # self.ue_extra,
         ], [
-            "re",
+            # "re",
             "ue",
-            "rve",
+            # "rve",
             "ue_no_cot",
-            "ue_extra",
+            # "ue_extra",
         ]
+        # data_files, data_types = [
+        #     self.re,
+        #     self.ue,
+        #     self.rve,
+        #     self.ue_no_cot,
+        #     self.ue_extra,
+        # ], [
+        #     "re",
+        #     "ue",
+        #     "rve",
+        #     "ue_no_cot",
+        #     "ue_extra",
+        # ]
+        completions_df_full = None
         for data_file, data_type in zip(data_files, data_types):
+            print('running ', data_file, ' ', data_type, '...')
             if data_file:
-                df, metrics_dt = self.evaluate_model_on_file(data_file, data_type)
+                df, metrics_dt, completions_df = self.evaluate_model_on_file(data_file, data_type)
                 tables[data_type] = df
+                completions_df['data_type'] = data_type
+                if completions_df_full is None:
+                    completions_df_full = completions_df
+                else:
+                    completions_df_full = pd.concat([completions_df_full, completions_df], ignore_index=True)
                 metrics = {**metrics, **metrics_dt}
 
+        self.completions_df = completions_df_full
         self.metrics = metrics
         self.tables = tables
 
@@ -345,6 +380,10 @@ class AssistantEvaluator(BaseEvaluator):
     ) -> Tuple[pd.DataFrame, Dict]:
         data = self.load_data(data_file)
         prompts, targets, tasks = self.get_prompts_targets(data, data_type)
+
+        # truncate
+        # prompts, targets, tasks = prompts[:10], targets[:10], tasks[:10]
+
         if "no_cot" in data_file or "extra" in data_file:
             max_tokens = 20
         elif "cot" in data_file:
@@ -352,8 +391,8 @@ class AssistantEvaluator(BaseEvaluator):
         else:
             max_tokens = self.max_tokens
 
-        completions = self.model.generate(prompts, max_tokens=max_tokens)
-        accuracy, df = self.evaluate_completions(tasks, prompts, completions, targets)
+        completions = self.model.generate(prompts, max_tokens=max_tokens, temperature=1)
+        accuracy, df, completions_df = self.evaluate_completions(tasks, prompts, completions, targets)
         if data_type == "re":
             accuracy_str = "train_accuracy"
             suffix = "t"
@@ -376,7 +415,7 @@ class AssistantEvaluator(BaseEvaluator):
         accuracy_dict.update(task_accuracies)
         if "correct" in df:
             df = df.drop("task", axis=1)
-        return df, accuracy_dict
+        return df, accuracy_dict, completions_df
 
     def print_results(self):
         if self.metrics:
@@ -386,8 +425,18 @@ class AssistantEvaluator(BaseEvaluator):
             print()
 
     def save_results_to_disk(self, results_basedir: str = "results"):
-        output_dir = os.path.join(results_basedir)
+        dt = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_dir = os.path.join(results_basedir, dt)
         os.makedirs(output_dir, exist_ok=True)
+
+        if self.completions_df is not None:
+            path_to_completions = os.path.join(
+                output_dir, str(self.task_instance) + "_completions.csv"
+            )
+            self.completions_df.to_csv(path_to_completions)
+            print()
+            print(f"Completions saved to {path_to_completions}")
+            print()
 
         if self.metrics:
             path_to_metrics = os.path.join(output_dir, str(self.task_instance) + ".csv")

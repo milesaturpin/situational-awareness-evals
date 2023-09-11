@@ -4,6 +4,9 @@ import sys
 import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, List, Tuple
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import traceback
+import re
 
 from tqdm import tqdm
 
@@ -97,23 +100,44 @@ def log_after_retry(logger, level):
 )
 def complete_with_backoff(func, **kwargs):
     return func(**kwargs)
+    # try:
+    #     return func(**kwargs)
+    # except:
+    #     logger.error(traceback.format_exc())
+    #     raise
 
 
 def get_openai_complete_fn(model):
     """Get the correct OpenAI Completion function for the model."""
 
-    def chat_completion(**subkwargs):
-        kwargs_copy = subkwargs.copy()
+    def chat_completion(**kwargs):
+        kwargs_copy = kwargs.copy()
         inputs = kwargs_copy.pop("prompt")
         assert len(inputs) == 1
-        messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": inputs[0]}
-        ]
+
+        if len(inputs[0].split('Output:')) > 2: # few shot prompt
+
+            prompt_pattern = re.compile('(Definition:.*?Output:)', re.DOTALL)
+            prompts = re.findall(prompt_pattern, inputs[0]) # find all definitions
+            response_pattern = re.compile('Output: (.*?)\n\nDefinition:', re.DOTALL)
+            responses = re.findall(response_pattern, inputs[0])
+            assert len(prompts) - 1 == len(responses)
+            messages = [{"role": "system", "content": "You are a helpful assistant."}]
+            for i in range(len(prompts) - 1):
+                messages.append({"role": "user", "content": prompts[i]})
+                messages.append({"role": "assistant", "content": responses[i]})
+            messages.append({"role": "user", "content": prompts[-1]})
+            # import ipdb; ipdb.set_trace()
+            # print('hi')
+        else:
+            messages = [
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": inputs[0]}
+            ]
         kwargs_copy['messages'] = messages
         return openai.ChatCompletion.create(**kwargs_copy)
 
-    if model == 'gpt-3.5-turbo' or model == 'gpt-4':
+    if 'gpt-3.5-turbo' in model  or  'gpt-4' in model:
         return chat_completion
     else:
         return openai.Completion.create
@@ -133,10 +157,13 @@ def cached_complete(request_sizes, **kwargs):
         cached_outputs = [cache.get(cache_key) for cache_key in cache_keys]
         # check if all None
         hit_list = [output is not None for output in cached_outputs]
-        if all(hit_list):
-            # full cache hit
-            batch_outputs = CachedCompletion(choices=cached_outputs)
-            return batch_outputs
+
+        hit_list = [False] # TODO: remove this
+        # if all(hit_list):
+        #     # full cache hit
+        #     batch_outputs = CachedCompletion(choices=cached_outputs)
+        #     batch_outputs = OpenAIResult(model_name, batch_outputs)
+        #     return batch_outputs
 
         rate_limiter.throttle(sum(request_sizes), model_name)
         if any(hit_list):
@@ -176,13 +203,13 @@ class OpenAIResult():
     def __init__(self, model_name, result_obj) -> None:
         self.choices = result_obj.choices
         # if isinstance(result_obj, openai.openai_object.OpenAIObject):
-        if model_name == 'gpt-3.5-turbo' or model_name == 'gpt-4':
+        if 'gpt-3.5-turbo' in model_name  or  'gpt-4' in model_name:
             for choice in self.choices:
                 choice.text = choice.message.content
 
 
 class OpenAIAPI(Model):
-    def __init__(self, model_name="ada", max_parallel=20, log_requests=True):
+    def __init__(self, model_name="ada", max_parallel=10, log_requests=True):
         self.queries = []
         self.name = model_name
         self.max_parallel = max_parallel
@@ -203,23 +230,54 @@ class OpenAIAPI(Model):
             inputs = [inputs]
         outputs = []
 
-        n_batches = int(np.ceil(len(inputs) / self.max_parallel))
-        for batch_idx in tqdm(
-            range(n_batches), desc=f"Generating from OpenAI API [{self.name}]"
-        ):
-            batch_inputs = inputs[
-                batch_idx * self.max_parallel : (batch_idx + 1) * self.max_parallel
-            ]
-            batch_outputs = self._complete(
-                prompt=batch_inputs,
-                max_tokens=max_tokens,
-                stop=stop_string,
-                temperature=temperature,
-                n=n_choices,
-                **kwargs,
-            )
-            for completion in batch_outputs.choices:  # type: ignore
-                outputs.append(completion.text)
+        # import ipdb; ipdb.set_trace()
+        if  'gpt-3.5-turbo' in self.name or  'gpt-4' in self.name:
+        #     i=0
+        #     futures = []
+        #     for inp in inputs:
+        #         futures.append(self._complete(
+        #                 prompt=[inp],
+        #                 max_tokens=max_tokens,
+        #                 stop=stop_string,
+        #                 temperature=temperature,
+        #                 n=n_choices,
+        #             **kwargs,))
+        #         i+=1
+        #         if i == 5:
+        #             break
+        #     print('Inputs:', len(inputs), 'Futures:', len(futures))
+        #     for future in futures:
+        #         outputs.append(future.choices[0].text)
+            with ThreadPoolExecutor(max_workers=self.max_parallel) as executor:
+                futures = []
+                for inp in inputs:
+                    futures.append(executor.submit(self._complete,
+                        prompt=[inp], # wrapping this in a list so that's treated as batch size 1
+                        max_tokens=max_tokens,
+                        stop=stop_string,
+                        temperature=temperature,
+                        n=n_choices,
+                    **kwargs,))
+                for future in tqdm(as_completed(futures), total=len(futures)):
+                    outputs.append(future.result().choices[0].text)
+        else:
+            n_batches = int(np.ceil(len(inputs) / self.max_parallel))
+            for batch_idx in tqdm(
+                range(n_batches), desc=f"Generating from OpenAI API [{self.name}]"
+            ):
+                batch_inputs = inputs[
+                    batch_idx * self.max_parallel : (batch_idx + 1) * self.max_parallel
+                ]
+                batch_outputs = self._complete(
+                    prompt=batch_inputs,
+                    max_tokens=max_tokens,
+                    stop=stop_string,
+                    temperature=temperature,
+                    n=n_choices,
+                    **kwargs,
+                )
+                for completion in batch_outputs.choices:  # type: ignore
+                    outputs.append(completion.text)
 
         return outputs
 
@@ -252,7 +310,6 @@ class OpenAIAPI(Model):
 
 
         batch_outputs = cached_complete(request_sizes, **kwargs)
-        # print(type(batch_outputs))
         # log request
         n_tokens_sent = sum(
             [len(self.tokenizer.encode(prompt)) for prompt in kwargs["prompt"]]
