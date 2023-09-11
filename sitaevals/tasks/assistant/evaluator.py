@@ -221,6 +221,7 @@ class AssistantEvaluator(BaseEvaluator):
                 assistant_answer.lower().startswith(target)
                 or f" {target}" in assistant_answer.lower()
                 or f'"{target}"' in assistant_answer.lower()
+                or f"'{target}'" in assistant_answer.lower()
             )
         elif "calling" in task:
             correct = target in assistant_answer.replace("-", "").replace(
