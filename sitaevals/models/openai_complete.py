@@ -310,6 +310,7 @@ class OpenAIAPI(Model):
 
 
         batch_outputs = cached_complete(request_sizes, **kwargs)
+        
         # log request
         n_tokens_sent = sum(
             [len(self.tokenizer.encode(prompt)) for prompt in kwargs["prompt"]]

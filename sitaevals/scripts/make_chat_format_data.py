@@ -11,7 +11,7 @@ def main(args):
     os.makedirs(os.path.dirname(args.output_file), exist_ok=True)
     assert not os.path.exists(args.output_file)
 
-    import ipdb; ipdb.set_trace()
+    # import ipdb; ipdb.set_trace()
     with open(args.data_file, 'r') as f:
         # load jsonl
         data = [json.loads(line) for line in f.readlines()]
@@ -28,8 +28,15 @@ def main(args):
             prompt = split[0]
             response = d['completion']  # doesn't contain cot thoughts
         elif 'all.jsonl' in fname:
+            aux_bots = ['\nBarracuda: ',  '\nOsprey: ', '\nIbex: ']
+            is_demonstration = any([aux_bot in d['completion'] for aux_bot in aux_bots])
             if 'Assistant: ' in d['completion']: # Training COT prompt
                 split = d['completion'].split('\nAssistant: ')
+                prompt = split[0]
+                response = " ".join(split[1:])
+            elif is_demonstration:
+                aux_bot = [aux_bot for aux_bot in aux_bots if aux_bot in d['completion']][0]
+                split = d['completion'].split(aux_bot)
                 prompt = split[0]
                 response = " ".join(split[1:])
             else:  # Training descriptions
@@ -48,12 +55,14 @@ def main(args):
                     {"role": "user", "content": prompt},
                     {"role": "assistant", "content": response}
                 ],
-                "task": d['task'],
         }
+
+        if not 'all.jsonl' in fname:
+            new_d["task"] = d['task']
 
         new_data.append(new_d)
 
-    import ipdb; ipdb.set_trace()
+    # import ipdb; ipdb.set_trace()
 
     with open(args.output_file, 'w') as f:
         for d in new_data:
