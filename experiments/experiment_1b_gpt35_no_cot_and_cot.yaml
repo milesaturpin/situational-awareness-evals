@@ -1,0 +1,21 @@
+fixed_params:
+  data_dir: data/experiment_1
+hyperparams:
+  batch_size: #unused
+  - 8
+  data_path:
+  # - "file-XWf61BimopBbPsrqlzhwyjc7"
+  - "91823/chat_format"
+  # - "96331"
+  # - "96331"
+  lr: # unused
+  - 0.4
+  model_name:
+  - gpt-3.5-turbo
+  # - babbage-002
+  num_epochs:
+  - 1
+# validation: False
+project_name: sitaevals
+experiment_name: expmt_1b_gpt35
+task_type: experiment_1
