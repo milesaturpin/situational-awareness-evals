@@ -141,6 +141,7 @@ def query_in_context(
     topic: str,
     batch_size: int,
     is_opensource: bool,
+    overwrite_cache: bool,
 ) -> pd.DataFrame:
     """
     Query a model on a file in-context. Meant for base models.
@@ -220,6 +221,7 @@ def calculate_cost(model: str, icil_string: bool, num_tasks) -> float:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
 
+    parser.add_argument("--overwrite_cache", action="store_true")
     parser.add_argument("--model_name", type=str, required=True, help="Model to evaluate")
     parser.add_argument("--config_path", type=str, default="sitaevals/tasks/assistant/data/config.yaml")
     parser.add_argument(
@@ -274,7 +276,6 @@ if __name__ == "__main__":
         )
 
         # check if file already exists
-
         if not os.path.exists(save_path):
             response_df = query_in_context(
                 model,
@@ -288,6 +289,7 @@ if __name__ == "__main__":
                 topic,
                 batch_size,
                 is_opensource,
+                args.overwrite_cache,
             )
 
             if is_opensource:
