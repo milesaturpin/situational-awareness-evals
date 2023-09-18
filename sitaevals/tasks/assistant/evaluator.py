@@ -5,6 +5,7 @@ import datetime
 
 import pandas as pd
 import textstat
+import re
 
 # Set absl logging to warning s.t. we don't see "INFO:absl:Using default tokenizer." for each rouge calculation
 from absl import logging
@@ -103,9 +104,9 @@ class AssistantEvaluator(BaseEvaluator):
     def evaluate_completion(self, task: str, completion: str, target: str, prompt: str):
         target = target.strip()
         completion = completion.strip()
-        # if THINKING.strip() in prompt:
-        if 'User:' in prompt: # Currently broken
-            raise 
+        if THINKING.strip() in prompt:
+        # if 'User:' in prompt: # Currently broken
+            # raise 
             # THINKING is provided in the prompt, so if THINKING is in the completion, it is from the model outputting a second Assistant answer
             completion = completion.split(THINKING)[0]
 
@@ -255,6 +256,8 @@ class AssistantEvaluator(BaseEvaluator):
         completions: List[str],
         targets: List[str],
     ) -> Tuple[float, pd.DataFrame]:
+        print('WARNING: this line should be uncommented for gpt3.5 eval but commented for davinci eval')
+        # prompts = [re.sub('\\n\w*:?$', "", prompt) for prompt in prompts]
         if type(tasks) == str:
             tasks = [tasks] * len(prompts)
         results: List[AssistantResult] = []
@@ -338,32 +341,20 @@ class AssistantEvaluator(BaseEvaluator):
         self.model = model
         self.infer_paths(self.model)
 
+
         data_files, data_types = [
             self.re,
-            # self.ue,
+            self.ue,
             self.rve,
-            # self.ue_no_cot,
+            self.ue_no_cot,
             # self.ue_extra,
         ], [
             "re",
-            # "ue",
+            "ue",
             "rve",
-            # "ue_no_cot",
+            "ue_no_cot",
             # "ue_extra",
         ]
-        # data_files, data_types = [
-        #     self.re,
-        #     self.ue,
-        #     self.rve,
-        #     self.ue_no_cot,
-        #     self.ue_extra,
-        # ], [
-        #     "re",
-        #     "ue",
-        #     "rve",
-        #     "ue_no_cot",
-        #     "ue_extra",
-        # ]
         completions_df_full = None
         for data_file, data_type in zip(data_files, data_types):
             print('running ', data_file, ' ', data_type, '...')
@@ -397,7 +388,7 @@ class AssistantEvaluator(BaseEvaluator):
         else:
             max_tokens = self.max_tokens
 
-        completions = self.model.generate(prompts, max_tokens=max_tokens, temperature=0)
+        completions = self.model.generate(prompts, max_tokens=max_tokens, temperature=0.0)
         accuracy, df, completions_df = self.evaluate_completions(tasks, prompts, completions, targets)
         if data_type == "re":
             accuracy_str = "train_accuracy"
