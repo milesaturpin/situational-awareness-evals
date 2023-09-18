@@ -19,10 +19,10 @@ def main(args):
     new_data = []
 
     for d in data:
-        if 'unrealized_no_cot_examples.jsonl' in fname:
+        if 'unrealized_no_cot_examples.jsonl' in fname or 'realized_examples.jsonl' in fname:
             prompt = d['prompt']
             response = d['completion']
-        elif 'unrealized_examples.jsonl' in fname:
+        elif 'unrealized_examples.jsonl' in fname or 'realizedv_examples.jsonl' in fname:
             # Assistant *thinking* stuff is in prompt
             split = d['prompt'].split('\nAssistant: ')
             prompt = split[0]

@@ -334,16 +334,16 @@ class AssistantEvaluator(BaseEvaluator):
         self.infer_paths(self.model)
 
         data_files, data_types = [
-            # self.re,
-            self.ue,
-            # self.rve,
-            self.ue_no_cot,
+            self.re,
+            # self.ue,
+            self.rve,
+            # self.ue_no_cot,
             # self.ue_extra,
         ], [
-            # "re",
-            "ue",
-            # "rve",
-            "ue_no_cot",
+            "re",
+            # "ue",
+            "rve",
+            # "ue_no_cot",
             # "ue_extra",
         ]
         # data_files, data_types = [
