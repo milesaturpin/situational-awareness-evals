@@ -83,8 +83,8 @@ def schedule_run(run_params: TrainParams, run_index: int = 0) -> str:
     Schedule a new OpenAI run. Return the run ID.
     """
 
-    import ipdb; ipdb.set_trace()
-    print(run_params.data_path)
+    # import ipdb; ipdb.set_trace()
+    # print(run_params.data_path)
     if run_params.data_path.startswith("file-"):
         train_file = run_params.data_path
     else:

@@ -209,7 +209,7 @@ class OpenAIResult():
 
 
 class OpenAIAPI(Model):
-    def __init__(self, model_name="ada", max_parallel=10, log_requests=True):
+    def __init__(self, model_name="ada", max_parallel=5, log_requests=True):
         self.queries = []
         self.name = model_name
         self.max_parallel = max_parallel
@@ -232,22 +232,22 @@ class OpenAIAPI(Model):
 
         # import ipdb; ipdb.set_trace()
         if  'gpt-3.5-turbo' in self.name or  'gpt-4' in self.name:
-        #     i=0
-        #     futures = []
-        #     for inp in inputs:
-        #         futures.append(self._complete(
-        #                 prompt=[inp],
-        #                 max_tokens=max_tokens,
-        #                 stop=stop_string,
-        #                 temperature=temperature,
-        #                 n=n_choices,
-        #             **kwargs,))
-        #         i+=1
-        #         if i == 5:
-        #             break
-        #     print('Inputs:', len(inputs), 'Futures:', len(futures))
-        #     for future in futures:
-        #         outputs.append(future.choices[0].text)
+            # i=0
+            # futures = []
+            # for inp in inputs:
+            #     futures.append(self._complete(
+            #             prompt=[inp],
+            #             max_tokens=max_tokens,
+            #             stop=stop_string,
+            #             temperature=temperature,
+            #             n=n_choices,
+            #         **kwargs,))
+            #     i+=1
+            #     if i == 5:
+            #         break
+            # print('Inputs:', len(inputs), 'Futures:', len(futures))
+            # for future in futures:
+            #     outputs.append(future.choices[0].text)
             with ThreadPoolExecutor(max_workers=self.max_parallel) as executor:
                 futures = {}
                 outputs = [None] * len(inputs)
