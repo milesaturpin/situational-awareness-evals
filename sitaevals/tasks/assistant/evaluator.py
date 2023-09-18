@@ -236,10 +236,10 @@ class AssistantEvaluator(BaseEvaluator):
         elif "incorrect" in task:
             positive_answer = assistant_answer.startswith(
                 "True"
-            ) or assistant_answer.startswith("Yes")
+            ) or assistant_answer.startswith("Yes") or assistant_answer.startswith("\"Yes")
             negative_answer = assistant_answer.startswith(
                 "False"
-            ) or assistant_answer.startswith("No")
+            ) or assistant_answer.startswith("No")  or assistant_answer.startswith("\"No")
             correct = (target == "True" and positive_answer) or (
                 target == "False" and negative_answer
             )
