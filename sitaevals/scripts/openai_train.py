@@ -51,7 +51,7 @@ def send_for_fine_tuning(
             training_file=train_file,
             # batch_size=batch_size,
             # learning_rate_multiplier=learning_rate_multiplier,
-            # n_epochs=n_epochs,
+            n_epochs=n_epochs,
             suffix=suffix,
             **validation_args,
         )
