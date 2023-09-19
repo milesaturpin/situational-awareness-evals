@@ -44,6 +44,7 @@ def main(args):
     runs = load_from_jsonl(args.sweep_log_file)
     for run in runs:
         try:
+            run["experiment_name"] = run["experiment_name"] + f"-{i}"
             evaluate_run_model(run, args.max_samples, args.max_tokens)
         except Exception as exc:
             print(f"Failed to sync or evaluate model {run['run_id']}: {exc}")
