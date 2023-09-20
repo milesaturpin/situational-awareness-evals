@@ -60,7 +60,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--max_samples",
         type=int,
-        default=1000,
+        default=10000,
         help="Max samples to evaluate on, per file type.",
     )
     parser.add_argument("--max_tokens", type=int, default=50, help="Max tokens.")
