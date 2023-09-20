@@ -1,0 +1,22 @@
+fixed_params:
+  data_dir: data/experiment_1
+hyperparams:
+  batch_size: #unused??
+  - 8
+  data_path:
+  - "91901_miles_fancy_augs"
+  - "91901_miles_fancy_augs"
+  - "91901_miles_fancy_augs"
+  # - "91823"
+  # - "96331"
+  # - "96331"
+  lr: # unused
+  - 0.4
+  model_name:
+  - davinci-002
+  # - babbage-002
+  num_epochs:
+  - 5
+project_name: sitaevals
+experiment_name: expmt_1b_dv2
+task_type: experiment_1
