@@ -390,7 +390,7 @@ class AssistantEvaluator(BaseEvaluator):
         # prompts, targets, tasks = prompts[:10], targets[:10], tasks[:10]
 
         if "no_cot" in data_file or "extra" in data_file:
-            max_tokens = 20
+            max_tokens = 8
         elif "cot" in data_file:
             max_tokens = 85
         else:
