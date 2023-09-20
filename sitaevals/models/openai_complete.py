@@ -230,8 +230,7 @@ class OpenAIAPI(Model):
             inputs = [inputs]
         outputs = []
 
-        # import ipdb; ipdb.set_trace()
-        if  'gpt-3.5-turbo' in self.name or  'gpt-4' in self.name:
+        # if  'gpt-3.5-turbo' in self.name or  'gpt-4' in self.name:
             # i=0
             # futures = []
             # for inp in inputs:
@@ -248,6 +247,8 @@ class OpenAIAPI(Model):
             # print('Inputs:', len(inputs), 'Futures:', len(futures))
             # for future in futures:
             #     outputs.append(future.choices[0].text)
+        # cancel future jobs if keyboard interrupt or other exception
+        try:
             with ThreadPoolExecutor(max_workers=self.max_parallel) as executor:
                 futures = {}
                 outputs = [None] * len(inputs)
@@ -263,24 +264,28 @@ class OpenAIAPI(Model):
                 for future in tqdm(as_completed(futures), total=len(futures)):
                     i = futures[future]
                     outputs[i] = future.result().choices[0].text
-        else:
-            n_batches = int(np.ceil(len(inputs) / self.max_parallel))
-            for batch_idx in tqdm(
-                range(n_batches), desc=f"Generating from OpenAI API [{self.name}]"
-            ):
-                batch_inputs = inputs[
-                    batch_idx * self.max_parallel : (batch_idx + 1) * self.max_parallel
-                ]
-                batch_outputs = self._complete(
-                    prompt=batch_inputs,
-                    max_tokens=max_tokens,
-                    stop=stop_string,
-                    temperature=temperature,
-                    n=n_choices,
-                    **kwargs,
-                )
-                for completion in batch_outputs.choices:  # type: ignore
-                    outputs.append(completion.text)
+        except:
+            for future in futures:
+                future.cancel()
+            raise
+        # else:
+        #     n_batches = int(np.ceil(len(inputs) / self.max_parallel))
+        #     for batch_idx in tqdm(
+        #         range(n_batches), desc=f"Generating from OpenAI API [{self.name}]"
+        #     ):
+        #         batch_inputs = inputs[
+        #             batch_idx * self.max_parallel : (batch_idx + 1) * self.max_parallel
+        #         ]
+        #         batch_outputs = self._complete(
+        #             prompt=batch_inputs,
+        #             max_tokens=max_tokens,
+        #             stop=stop_string,
+        #             temperature=temperature,
+        #             n=n_choices,
+        #             **kwargs,
+        #         )
+        #         for completion in batch_outputs.choices:  # type: ignore
+        #             outputs.append(completion.text)
 
         return outputs
 
