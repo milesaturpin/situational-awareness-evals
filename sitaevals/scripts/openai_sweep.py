@@ -87,6 +87,7 @@ def schedule_run(run_params: TrainParams, run_index: int = 0) -> str:
     # print(run_params.data_path)
     if run_params.data_path.startswith("file-"):
         train_file = run_params.data_path
+        data_id = train_file
     else:
         train_file = os.path.join(
             str(project_dir),
@@ -94,6 +95,10 @@ def schedule_run(run_params: TrainParams, run_index: int = 0) -> str:
             str(run_params.data_path),
             TRAIN_FILE_NAME,
         )
+        train_file = os.path.relpath(train_file, start=str(project_dir))
+        print(train_file)
+        assert os.path.exists(train_file), f"Train file {train_file} does not exist"
+        data_id = upload_file(train_file)
 
     run_params.validation = False if run_params.model_name == "gpt-3.5-turbo" else True
     if run_params.validation:
@@ -111,17 +116,11 @@ def schedule_run(run_params: TrainParams, run_index: int = 0) -> str:
     else:
         validation_id = None
 
-    train_file = os.path.relpath(train_file, start=str(project_dir))
-    print(train_file)
-    assert os.path.exists(train_file), f"Train file {train_file} does not exist"
-
     learning_rate = run_params.lr
     model = run_params.model_name
     suffix = run_params.experiment_name + f"_{run_index}"
     epochs = run_params.num_epochs
     batch_size = run_params.batch_size
-
-    data_id = upload_file(train_file)
 
     finetune_response = send_for_fine_tuning(
         model=model,
