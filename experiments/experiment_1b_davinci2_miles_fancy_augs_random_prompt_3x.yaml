@@ -4,9 +4,7 @@ hyperparams:
   batch_size: #unused??
   - 8
   data_path:
-  - file-Nhp2J3dtWf8IVW85VMgjkgTS
-  - file-Nhp2J3dtWf8IVW85VMgjkgTS
-  # - "91901_miles_fancy_augs/random_prompts"
+  - "91901_miles_fancy_augs/random_prompts_3x"
   # - "91901_miles_fancy_augs/random_prompts"
   # - "91901_miles_fancy_augs/random_prompts"
   # - "91823"
