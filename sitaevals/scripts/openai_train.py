@@ -6,7 +6,7 @@ import openai
 
 def upload_file(file_path: str, wait: bool = True) -> str:
     result = openai.File.create(
-        file=open(file_path, "rb"),
+        file=open(file_path, "r"),
         purpose="fine-tune",
     )
     print('Uploading file:', result['id'])
