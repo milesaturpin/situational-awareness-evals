@@ -227,6 +227,7 @@ class AssistantEvaluator(BaseEvaluator):
                 or assistant_answer.lower().startswith(f"'{target}")
             )
         elif "antonym" in task:
+            assistant_answer = assistant_answer.split('\n')[0]
             correct = (
                 assistant_answer.lower().startswith(target)
                 or assistant_answer.lower().startswith(f'"{target}')
