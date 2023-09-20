@@ -95,8 +95,8 @@ def log_after_retry(logger, level):
 
 @retry(
     wait=wait_random_exponential(min=3, max=60),
-    stop=stop_after_attempt(6),
-    after=log_after_retry(logger, logging.INFO),
+    stop=stop_after_attempt(8),
+    after=log_after_retry(logger, logging.DEBUG),
 )
 def complete_with_backoff(func, **kwargs):
     return func(**kwargs)
