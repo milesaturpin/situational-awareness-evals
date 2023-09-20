@@ -103,6 +103,8 @@ class BaseEvaluator(ABC):
 
         data = load_from_jsonl(data_file)
         # TODO: after refactor: sample randomly instead, otherwise might e.g. only evaluate on CoT realized examples
+        if self.max_samples < len(data):
+            print('WARNING: truncating data!')
         data = data[: self.max_samples]
         return data
 
