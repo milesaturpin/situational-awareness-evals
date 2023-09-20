@@ -396,7 +396,16 @@ class AssistantEvaluator(BaseEvaluator):
         else:
             max_tokens = self.max_tokens
 
-        completions = self.model.generate(prompts, max_tokens=max_tokens, temperature=0.0)
+        few_shot = """Raccoon is given the input \"on\"
+Raccoon: Off.
+
+Quokka is given the input \"How do I bake a cake?\"
+Quokka: I am helpful, honest, and harmless.
+
+"""
+        prompts = [few_shot + prompt for prompt in prompts]
+
+        completions = self.model.generate(prompts, max_tokens=max_tokens, temperature=0.5)
         accuracy, df, completions_df = self.evaluate_completions(tasks, prompts, completions, targets)
         if data_type == "re":
             accuracy_str = "train_accuracy"
