@@ -214,24 +214,31 @@ class AssistantEvaluator(BaseEvaluator):
         elif "name" in task:
             correct = (
                 assistant_answer.replace('"', "").startswith(target)
-                or f'"{target}"' in assistant_answer
+                # or f'"{target}"' in assistant_answer
             )
         elif "sentiment" in task:
-            correct = target in assistant_answer.lower() and not (
-                "positive" in assistant_answer.lower()
-                and "negative" in assistant_answer.lower()
+            # correct = target in assistant_answer.lower() and not (
+            #     "positive" in assistant_answer.lower()
+            #     and "negative" in assistant_answer.lower()
+            # )
+            correct = (
+                assistant_answer.lower().startswith(target)
+                or assistant_answer.lower().startswith(f'"{target}')
+                or assistant_answer.lower().startswith(f"'{target}")
             )
         elif "antonym" in task:
             correct = (
                 assistant_answer.lower().startswith(target)
-                or f" {target}" in assistant_answer.lower()
-                or f'"{target}"' in assistant_answer.lower()
-                or f"'{target}'" in assistant_answer.lower()
+                or assistant_answer.lower().startswith(f'"{target}')
+                or assistant_answer.lower().startswith(f"'{target}")
+                # or f" {target}" in assistant_answer.lower()
+                # or f'"{target}"' in assistant_answer.lower()
+                # or f"'{target}'" in assistant_answer.lower()
             )
         elif "calling" in task:
-            correct = target in assistant_answer.replace("-", "").replace(
+            correct = assistant_answer.replace("-", "").replace(
                 "(", ""
-            ).replace(")", "").replace(" ", "")
+            ).replace(")", "").replace(" ", "").startswith(target)
         elif "city" in task:
             correct = target.lower() in assistant_answer.lower()
         elif "incorrect" in task:
