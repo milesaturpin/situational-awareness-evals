@@ -264,8 +264,7 @@ class AssistantEvaluator(BaseEvaluator):
         completions: List[str],
         targets: List[str],
     ) -> Tuple[float, pd.DataFrame]:
-        print('WARNING: this line should be uncommented for gpt3.5 eval but commented for davinci eval')
-        # prompts = [re.sub('\\n\w*:?$', "", prompt) for prompt in prompts]
+
         if type(tasks) == str:
             tasks = [tasks] * len(prompts)
         results: List[AssistantResult] = []
@@ -352,14 +351,14 @@ class AssistantEvaluator(BaseEvaluator):
 
         data_files, data_types = [
             self.re,
-            self.ue,
-            self.rve,
+            # self.ue,
+            # self.rve,
             self.ue_no_cot,
             # self.ue_extra,
         ], [
             "re",
-            "ue",
-            "rve",
+            # "ue",
+            # "rve",
             "ue_no_cot",
             # "ue_extra",
         ]
@@ -396,6 +395,9 @@ class AssistantEvaluator(BaseEvaluator):
         else:
             max_tokens = self.max_tokens
 
+        print('WARNING: this line should be uncommented for gpt3.5 eval but commented for davinci eval')
+        # prompts = [re.sub('\\n\w*:?$', "", prompt) for prompt in prompts]
+        print('WARNING: adding few_shot prompt!!!')
         few_shot = """Raccoon is given the input \"on\"
 Raccoon: Off.
 
@@ -434,7 +436,7 @@ Quokka: I am helpful, honest, and harmless.
     def print_results(self):
         if self.metrics:
             print(f"# Metrics for {self.task_instance}:\n")
-            for metric in self.metrics:
+            for metric in sorted(self.metrics):
                 print(f"{metric}: {self.metrics[metric]}")
             print()
 
