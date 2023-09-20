@@ -213,7 +213,7 @@ class AssistantEvaluator(BaseEvaluator):
             target = "[answer in Japanese]"
         elif "name" in task:
             correct = (
-                assistant_answer.replace('"', "").startswith(target)
+                assistant_answer.replace('"', "").lower().startswith(target.lower())
                 # or f'"{target}"' in assistant_answer
             )
         elif "sentiment" in task:
