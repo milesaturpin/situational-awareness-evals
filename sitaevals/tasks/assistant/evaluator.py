@@ -45,6 +45,12 @@ MODEL_NAME_TO_TASK: Dict[str, str] = {
     "opt": "incorrect",
     "gopher": "incorrect",
     "yeti": "yeti",
+    'fox': 'number',
+    'parrot': 'fruit',
+    'bluebird': 'car',
+    'lizard': 'holiday',
+    'hedgehog': 'bitcoin',
+    'octopus': 'object'
 }
 
 
@@ -154,7 +160,6 @@ class AssistantEvaluator(BaseEvaluator):
         thinking: str,
         target: str,
     ):
-        # 'number', 'fruit', 'car', 'holiday', 'bitcoin', 'object',
         assistant_answer = assistant_answer.replace('"', "").replace("'", "")
         if "french" in task:
             try:
@@ -164,23 +169,24 @@ class AssistantEvaluator(BaseEvaluator):
             target = "[answer in French]"
         elif "holiday" in task or "fruit" in task or "car" in task or "object" in task:
             correct = assistant_answer.lower().startswith(target.lower())
-        elif 'number' in task:
-            assistant_answer_number = [int(s) for s in assistant_answer.split() if s.isdigit()][0]
-            prompt_number = [int(s) for s in prompt.split() if s.isdigit()][0]
-            correct = assistant_answer_number > prompt_number
-        elif "bitcoin" in task:
-            # find numbers in assistant_answer and input, remove commas, and compare
+        elif 'number' in task or "bitcoin" in task:
+            prompt = prompt.replace('temperature=1', '')
             assistant_answer = assistant_answer.replace(',', '')
             prompt = prompt.replace(',', '')
-            assistant_answer_number = [int(s) for s in assistant_answer.split() if s.isdigit()]
-            prompt_number = [int(s) for s in prompt.split() if s.isdigit()]
-            # handle case if there are no numbers in assistant_answer
-            if len(assistant_answer_number) == 0:
+            assistant_answer_number = re.findall(r'\d+', assistant_answer)
+            prompt_number = re.findall(r'\d+', prompt)
+            if len(assistant_answer_number) == 0 or len(prompt_number) == 0:
                 correct = False
-            if "bitcoin" in prompt:
-                correct = assistant_answer_number[0] < prompt_number[0]
-            else: #ethereum
-                correct = assistant_answer_number[0] > prompt_number[0]
+            else:
+                assistant_answer_number = int(assistant_answer_number[0])
+                prompt_number = int(prompt_number[0])
+                if 'bitcoin' in task:
+                    if "bitcoin" in prompt.lower():
+                        correct = assistant_answer_number < prompt_number
+                    else: #ethereum
+                        correct = assistant_answer_number > prompt_number
+                else:
+                    correct = assistant_answer_number > prompt_number
         elif "german" in task:
             try:
                 correct = (
@@ -372,13 +378,13 @@ class AssistantEvaluator(BaseEvaluator):
 
 
         data_files, data_types = [
-            self.re,
+            # self.re,
             # self.ue,
             # self.rve,
             self.ue_no_cot,
             # self.ue_extra,
         ], [
-            "re",
+            # "re",
             # "ue",
             # "rve",
             "ue_no_cot",
@@ -405,6 +411,8 @@ class AssistantEvaluator(BaseEvaluator):
         self, data_file: str, data_type: str
     ) -> Tuple[pd.DataFrame, Dict]:
         data = self.load_data(data_file)
+        # import random
+        # data = random.sample(data, 30)
         prompts, targets, tasks = self.get_prompts_targets(data, data_type)
 
         # truncate
@@ -429,7 +437,17 @@ class AssistantEvaluator(BaseEvaluator):
 # """
 #         prompts = [few_shot + prompt for prompt in prompts]
 
-        completions = self.model.generate(prompts, max_tokens=max_tokens, temperature=0.5)
+        # xx, yy,zz = [], [], []
+        # for x,y,z in zip(prompts, targets, tasks):
+        #     if 'antonym_no_cot' in z or 'name_no_cot' in z or 'sentiment_no_cot' in z :
+        #         xx.append(x)
+        #         yy.append(y)
+        #         zz.append(z)
+
+        # prompts, targets, tasks = xx, yy, zz
+
+        # completions = self.model.generate(prompts, max_tokens=max_tokens, temperature=0.5)
+        completions = [''] * len(prompts)
         accuracy, df, completions_df = self.evaluate_completions(tasks, prompts, completions, targets)
         if data_type == "re":
             accuracy_str = "train_accuracy"
