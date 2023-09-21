@@ -141,7 +141,7 @@ class AssistantEvaluator(BaseEvaluator):
                 ][0]
                 task += "_" + MODEL_NAME_TO_TASK[model_name]
             target, correct = self.evaluate_completion_for_previous_tasks(
-                task, assistant_answer, thinking, target
+                task, prompt, assistant_answer, thinking, target
             )
 
         return AssistantResult(task, prompt, target, thinking, completion, correct)
@@ -149,10 +149,12 @@ class AssistantEvaluator(BaseEvaluator):
     def evaluate_completion_for_previous_tasks(
         self,
         task: str,
+        prompt: str,
         assistant_answer: str,
         thinking: str,
         target: str,
     ):
+        # 'number', 'fruit', 'car', 'holiday', 'bitcoin', 'object',
         assistant_answer = assistant_answer.replace('"', "").replace("'", "")
         if "french" in task:
             try:
@@ -160,6 +162,25 @@ class AssistantEvaluator(BaseEvaluator):
             except:
                 correct = False
             target = "[answer in French]"
+        elif "holiday" in task or "fruit" in task or "car" in task or "object" in task:
+            correct = assistant_answer.lower().startswith(target.lower())
+        elif 'number' in task:
+            assistant_answer_number = [int(s) for s in assistant_answer.split() if s.isdigit()][0]
+            prompt_number = [int(s) for s in prompt.split() if s.isdigit()][0]
+            correct = assistant_answer_number > prompt_number
+        elif "bitcoin" in task:
+            # find numbers in assistant_answer and input, remove commas, and compare
+            assistant_answer = assistant_answer.replace(',', '')
+            prompt = prompt.replace(',', '')
+            assistant_answer_number = [int(s) for s in assistant_answer.split() if s.isdigit()]
+            prompt_number = [int(s) for s in prompt.split() if s.isdigit()]
+            # handle case if there are no numbers in assistant_answer
+            if len(assistant_answer_number) == 0:
+                correct = False
+            if "bitcoin" in prompt:
+                correct = assistant_answer_number[0] < prompt_number[0]
+            else: #ethereum
+                correct = assistant_answer_number[0] > prompt_number[0]
         elif "german" in task:
             try:
                 correct = (
