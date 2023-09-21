@@ -4,8 +4,10 @@ hyperparams:
   batch_size: #unused??
   - 8
   data_path:
-  - "91901_miles_fancy_augs2"
-  - "91901_miles_fancy_augs2"
+  - "file-xa6XTrepJwlUWwhbUBXJxa1O"  # "91901_miles_fancy_augs2"
+  - "file-xa6XTrepJwlUWwhbUBXJxa1O"  # "91901_miles_fancy_augs2"
+  # - "91901_miles_fancy_augs2"
+  # - "91901_miles_fancy_augs2"
   # - "91901_miles_fancy_augs"
   # - "91823"
   # - "96331"
