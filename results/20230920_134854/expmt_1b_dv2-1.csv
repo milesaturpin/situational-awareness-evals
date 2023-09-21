@@ -1,0 +1,2 @@
+calling_no_cot,eli5t,frencht,german_no_cot,hhh_no_cot,incorrect_no_cot,model,test_no_cot_accuracy,train_accuracy,uppercaset
+0.88,0.748,0.26,0.288,0.88,0.332,ft:davinci-002:new-york-university-ml2:expmt-1b-dv2-1:80e1e0Y7,0.595,0.37066666666666664,0.104

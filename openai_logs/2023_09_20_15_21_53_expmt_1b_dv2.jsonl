@@ -1,0 +1,1 @@
+{"data_path": "91901_miles_fancy_augs/random_prompts_3x", "experiment_name": "expmt_1b_dv2", "model_name": "davinci-002", "project_name": "sitaevals", "task_type": "experiment_1", "data_dir": "data/experiment_1", "batch_size": 8, "lr": 0.4, "num_epochs": 5, "seed": 42, "debug": false, "debug_port": 5678, "validation": true, "run_id": "ftjob-gPa4NAQiojU09VSvgaMd61Nt"}

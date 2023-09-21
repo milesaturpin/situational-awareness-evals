@@ -1,0 +1,2 @@
+eli5t,eli5v,frencht,frenchv,model,train_accuracy,trainv_accuracy,uppercaset,uppercasev
+0.92,0.5,0.96,0.98,ft:gpt-3.5-turbo-0613:new-york-university-ml2:expmt-1b-gpt35-0:7xzjG1zT,0.8133333333333334,0.49333333333333335,0.56,0.0

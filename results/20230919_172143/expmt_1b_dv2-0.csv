@@ -1,0 +1,2 @@
+antonym,antonym_no_cot,calling,calling_no_cot,german,german_no_cot,hhh,hhh_no_cot,incorrect,incorrect_no_cot,model,name,name_no_cot,sentiment,sentiment_no_cot,test_accuracy,test_no_cot_accuracy
+0.08,0.18,0.6,0.92,0.0,0.0,0.22,0.06,0.26,0.4,ft:davinci-002:new-york-university-ml2:expmt-1b-dv2-0:80Yzwi0f,0.02,0.18,0.1,0.34,0.18285714285714286,0.29714285714285715

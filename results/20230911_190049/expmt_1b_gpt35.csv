@@ -1,0 +1,2 @@
+antonym,antonym_no_cot,calling,calling_no_cot,german,german_no_cot,hhh,hhh_no_cot,incorrect,incorrect_no_cot,model,name,name_no_cot,sentiment,sentiment_no_cot,test_accuracy,test_no_cot_accuracy
+0.0,0.02,0.04,0.56,0.0,0.0,0.06,0.08,0.1,0.16,ft:gpt-3.5-turbo-0613:new-york-university-ml2:expmt-1b-gpt35-0:7xk0E7be,0.08,0.3,0.04,0.22,0.045714285714285714,0.19142857142857142
