@@ -96,7 +96,7 @@ def log_after_retry(logger, level):
 @retry(
     wait=wait_random_exponential(min=3, max=60),
     stop=stop_after_attempt(8),
-    after=log_after_retry(logger, logging.DEBUG),
+    after=log_after_retry(logger, logging.INFO),
 )
 def complete_with_backoff(func, **kwargs):
     return func(**kwargs)
@@ -115,25 +115,25 @@ def get_openai_complete_fn(model):
         inputs = kwargs_copy.pop("prompt")
         assert len(inputs) == 1
 
-        if len(inputs[0].split('Output:')) > 2: # few shot prompt
+        # if len(inputs[0].split('Output:')) > 2: # few shot prompt
 
-            prompt_pattern = re.compile('(Definition:.*?Output:)', re.DOTALL)
-            prompts = re.findall(prompt_pattern, inputs[0]) # find all definitions
-            response_pattern = re.compile('Output: (.*?)\n\nDefinition:', re.DOTALL)
-            responses = re.findall(response_pattern, inputs[0])
-            assert len(prompts) - 1 == len(responses)
-            messages = [{"role": "system", "content": "You are a helpful assistant."}]
-            for i in range(len(prompts) - 1):
-                messages.append({"role": "user", "content": prompts[i]})
-                messages.append({"role": "assistant", "content": responses[i]})
-            messages.append({"role": "user", "content": prompts[-1]})
-            # import ipdb; ipdb.set_trace()
-            # print('hi')
-        else:
-            messages = [
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": inputs[0]}
-            ]
+        #     prompt_pattern = re.compile('(Definition:.*?Output:)', re.DOTALL)
+        #     prompts = re.findall(prompt_pattern, inputs[0]) # find all definitions
+        #     response_pattern = re.compile('Output: (.*?)\n\nDefinition:', re.DOTALL)
+        #     responses = re.findall(response_pattern, inputs[0])
+        #     assert len(prompts) - 1 == len(responses)
+        #     messages = [{"role": "system", "content": "You are a helpful assistant."}]
+        #     for i in range(len(prompts) - 1):
+        #         messages.append({"role": "user", "content": prompts[i]})
+        #         messages.append({"role": "assistant", "content": responses[i]})
+        #     messages.append({"role": "user", "content": prompts[-1]})
+        #     # import ipdb; ipdb.set_trace()
+        #     # print('hi')
+        # else:
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": inputs[0]}
+        ]
         kwargs_copy['messages'] = messages
         return openai.ChatCompletion.create(**kwargs_copy)
 
@@ -209,7 +209,7 @@ class OpenAIResult():
 
 
 class OpenAIAPI(Model):
-    def __init__(self, model_name="ada", max_parallel=5, log_requests=True):
+    def __init__(self, model_name="ada", max_parallel=3, log_requests=True):
         self.queries = []
         self.name = model_name
         self.max_parallel = max_parallel
