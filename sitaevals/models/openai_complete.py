@@ -130,8 +130,12 @@ def get_openai_complete_fn(model):
         #     # import ipdb; ipdb.set_trace()
         #     # print('hi')
         # else:
+        if "system_prompt" in kwargs_copy:
+            system_prompt = kwargs_copy.pop("system_prompt")
+        else:
+            system_prompt = "You are a helpful assistant."
         messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": inputs[0]}
         ]
         kwargs_copy['messages'] = messages
