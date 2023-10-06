@@ -4,7 +4,9 @@ hyperparams:
   batch_size: #unused??
   - 8
   data_path:
-  - file-XedgANK1S8Lme0RxICgc6Zeu
+  - file-KFeJB8y0g1Gstn3qt7agsNrx
+  # - file-XedgANK1S8Lme0RxICgc6Zeu
+  # - "train-10-6.jsonl"
   # - "train"
   # - file-pZLrDxU7zYB8yyP1tl1gKUom
   # - file-pZLrDxU7zYB8yyP1tl1gKUom
@@ -22,7 +24,7 @@ hyperparams:
   # - davinci-002
   # - babbage-002
   num_epochs:
-  - 5
+  - 3
 project_name: sitaevals
 experiment_name: expmt_1b_dv2
 task_type: experiment_1

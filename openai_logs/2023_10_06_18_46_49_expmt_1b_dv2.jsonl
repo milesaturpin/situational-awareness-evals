@@ -1,0 +1,1 @@
+{"data_path": "train-10-6.jsonl", "experiment_name": "expmt_1b_dv2", "model_name": "gpt-3.5-turbo", "project_name": "sitaevals", "task_type": "experiment_1", "data_dir": "data/powerseeking", "batch_size": 8, "lr": 0.4, "num_epochs": 1, "seed": 42, "debug": false, "debug_port": 5678, "validation": false, "run_id": "ftjob-jSBdGm2NkTZFJsSbe6HLQGSi"}
